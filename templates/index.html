@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>الخالة نوسة</title>
+
+<style>
+
+body{
+    background:#f4f4f4;
+    font-family:Tahoma;
+    margin:0;
+}
+
+header{
+    background:#ff69b4;
+    color:white;
+    padding:15px;
+    font-size:28px;
+    text-align:center;
+}
+
+#chat{
+    width:90%;
+    max-width:900px;
+    height:65vh;
+    margin:20px auto;
+    background:white;
+    border-radius:10px;
+    overflow:auto;
+    padding:15px;
+    box-shadow:0 0 10px #ccc;
+}
+
+.user{
+    text-align:right;
+    margin:10px;
+    color:#0066cc;
+}
+
+.bot{
+    text-align:left;
+    margin:10px;
+    color:#cc0066;
+}
+
+#bottom{
+    width:90%;
+    max-width:900px;
+    margin:auto;
+    display:flex;
+}
+
+input{
+    flex:1;
+    padding:12px;
+    font-size:18px;
+}
+
+button{
+    width:120px;
+    font-size:18px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+🌸 الخالة نوسة
+</header>
+
+<div id="chat"></div>
+
+<div id="bottom">
+
+<input
+id="msg"
+placeholder="اكتب رسالتك..."
+onkeydown="if(event.key==='Enter')sendMessage()">
+
+<button onclick="sendMessage()">
+إرسال
+</button>
+
+</div>
+
+<script>
+
+async function sendMessage(){
+
+let input=document.getElementById("msg");
+
+let text=input.value;
+
+if(text=="") return;
+
+let chat=document.getElementById("chat");
+
+chat.innerHTML+=
+"<div class='user'><b>أنت:</b> "+text+"</div>";
+
+input.value="";
+
+let r=await fetch("/chat",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+message:text
+
+})
+
+});
+
+let data=await r.json();
+
+chat.innerHTML+=
+"<div class='bot'><b>الخالة نوسة:</b> "+data.response+"</div>";
+
+chat.scrollTop=chat.scrollHeight;
+
+}
+
+</script>
+
+</body>
+</html>
