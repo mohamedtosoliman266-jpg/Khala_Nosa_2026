@@ -2,6 +2,9 @@
 Khala Nosa Engine
 """
 
+from app.brain.brain import KhalaBrain
+from app.nlu.bootstrap import create_nlu
+
 
 class Engine:
 
@@ -19,6 +22,15 @@ class Engine:
         self.skills = skills
         self.ai_provider = ai_provider
 
+        self.nlu = create_nlu()
+
+        self.brain = KhalaBrain(
+            memory=memory,
+            profile=profile,
+            skills=skills,
+            ai=ai_provider,
+        )
+
     def process(self, message: str) -> str:
 
         if not message.strip():
@@ -27,50 +39,90 @@ class Engine:
         if self.memory:
             self.memory.remember_user(message)
 
-        if self.skills:
-            result = self.skills.handle(message)
-            if result:
-                if self.memory:
-                    self.memory.remember_assistant(result)
-                return result
+        result = self.nlu.analyze(message)
 
-        prompt = ""
+        # الاسم
+        if result["intent"] == "save_name":
+            self.profile.set("name", result["value"])
+            response = f"تشرفت بيك يا {result['value']} 🌸"
 
-        # Personality
-        if self.personality:
-            prompt += self.personality.system_prompt().strip()
-            prompt += "\n\n"
+        elif result["intent"] == "ask_name":
+            name = self.profile.get("name")
+            response = f"اسمك {name} 🌸" if name else "لسه ماعرفش اسمك."
 
-        # User Profile
-        if self.profile:
-            data = self.profile.all()
+        # العمر
+        elif result["intent"] == "save_age":
+            self.profile.set("age", result["value"])
+            response = f"تمام... سجلت إن عمرك {result['value']} سنة 🌸"
 
-            if data:
-                prompt += "بيانات المستخدم:\n"
+        elif result["intent"] == "ask_age":
+            age = self.profile.get("age")
+            response = f"عمرك {age} سنة 🌸" if age is not None else "لسه معرفش عمرك."
 
-                for k, v in data.items():
-                    prompt += f"{k}: {v}\n"
+        # المهنة
+        elif result["intent"] == "save_job":
+            self.profile.set("job", result["value"])
+            response = f"تمام... سجلت إن شغلك {result['value']} 🌸"
 
-                prompt += "\n"
+        elif result["intent"] == "ask_job":
+            job = self.profile.get("job")
+            response = f"أنت بتشتغل {job} 🌸" if job else "لسه معرفش شغلك."
 
-        # Conversation Memory
-        if self.memory:
-            history = self.memory.build_context()
+        # المدينة
+        elif result["intent"] == "save_city":
+            self.profile.set("city", result["value"])
+            response = f"تمام... سجلت إنك ساكن في {result['value']} 🌸"
 
-            if history:
-                prompt += "المحادثة السابقة:\n"
-                prompt += history
+        elif result["intent"] == "ask_city":
+            city = self.profile.get("city")
+            response = f"أنت ساكن في {city} 🌸" if city else "لسه معرفش ساكن فين."
+
+        # احكيلي عني
+        elif result["intent"] == "about_me":
+
+            profile = self.profile.all()
+
+            response = (
+                f"👤 اسمك: {profile.get('name', 'غير معروف')}\n"
+                f"🎂 عمرك: {profile.get('age', 'غير معروف')}\n"
+                f"💼 شغلك: {profile.get('job', 'غير معروف')}\n"
+                f"🏠 ساكن في: {profile.get('city', 'غير معروف')}"
+            )
+
+        else:
+
+            prompt = ""
+
+            if self.personality:
+                prompt += self.personality.system_prompt().strip()
                 prompt += "\n\n"
 
-        prompt += "رسالة المستخدم:\n"
-        prompt += message
+            if self.profile:
+                profile = self.profile.all()
 
-        if self.ai_provider:
-            response = self.ai_provider.generate(prompt)
-        else:
-            response = "أنا الخالة نوسة 🌸"
+                if profile:
+                    prompt += "بيانات المستخدم:\n"
+
+                    for key, value in profile.items():
+                        prompt += f"{key}: {value}\n"
+
+                    prompt += "\n"
+
+            if self.memory:
+                history = self.memory.build_context()
+
+                if history:
+                    prompt += "المحادثة السابقة:\n"
+                    prompt += history
+                    prompt += "\n\n"
+
+            prompt += "رسالة المستخدم:\n"
+            prompt += message
+
+            response = self.brain.think(prompt)
 
         if self.memory:
             self.memory.remember_assistant(response)
 
         return response
+
