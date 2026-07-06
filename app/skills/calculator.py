@@ -1,22 +1,59 @@
+"""
+Calculator Skill
+"""
+
 import re
+from typing import Any, Dict, Optional
+
+from app.skills.base import BaseSkill
 
 
-class CalculatorSkill:
+class CalculatorSkill(BaseSkill):
 
-    def can_handle(self, message):
+    name = "calculator"
+    version = "1.0"
+    priority = 50
 
-        return bool(
-            re.fullmatch(
-                r"[0-9\+\-\*\/\(\)\.\s]+",
-                message
+    def can_handle(
+        self,
+        intent: str,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> bool:
+
+        if intent == "calculator":
+            return True
+
+        if context:
+
+            message = context.get("message", "")
+
+            return bool(
+                re.fullmatch(
+                    r"[0-9\+\-\*\/\(\)\.\s]+",
+                    message
+                )
             )
-        )
 
-    def handle(self, message):
+        return False
+
+    def handle(
+        self,
+        result: Dict[str, Any],
+        context: Optional[Dict[str, Any]] = None,
+    ) -> Any:
+
+        message = context.get("message", "")
 
         try:
-            result = eval(message, {"__builtins__": {}})
-            return f"الناتج = {result}"
+
+            value = eval(
+                message,
+                {"__builtins__": {}},
+            )
+
+            return f"الناتج = {value}"
+
         except Exception:
+
             return None
 

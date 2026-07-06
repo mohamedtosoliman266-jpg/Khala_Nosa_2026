@@ -53,4 +53,5 @@ class ProfileExtractor:
         if text == "احكيلي عني":
             return {"intent": "about_me"}
 
-        return {"intent": "chat"}
+        return  None
+

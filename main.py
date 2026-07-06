@@ -6,9 +6,11 @@ from app.profile.profile_manager import ProfileManager
 
 from app.skills.manager import SkillManager
 from app.skills.calculator import CalculatorSkill
+from app.skills.profile import ProfileSkill
 
 
 def main():
+
     ai = GeminiProvider()
 
     memory = MemoryManager()
@@ -18,6 +20,8 @@ def main():
     profile = ProfileManager()
 
     skills = SkillManager()
+
+    skills.register(ProfileSkill(profile))
     skills.register(CalculatorSkill())
 
     engine = Engine(
